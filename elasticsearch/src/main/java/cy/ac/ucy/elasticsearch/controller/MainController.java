@@ -2,25 +2,21 @@ package cy.ac.ucy.elasticsearch.controller;
 
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 import cy.ac.ucy.elasticsearch.exception.FileStorageException;
 import cy.ac.ucy.elasticsearch.form.EvaluationMetrics;
 import cy.ac.ucy.elasticsearch.form.QueryEvaluation;
 import cy.ac.ucy.elasticsearch.form.RequestLogger;
-import cy.ac.ucy.elasticsearch.form.SearchResp;
 import cy.ac.ucy.elasticsearch.model.Aerodynamic;
 import cy.ac.ucy.elasticsearch.model.Query;
 import cy.ac.ucy.elasticsearch.model.QueryResponse;
 import cy.ac.ucy.elasticsearch.service.EvaluationService;
 import cy.ac.ucy.elasticsearch.service.FileStorageService;
 import cy.ac.ucy.elasticsearch.service.PrepareTextService;
-import jdk.nashorn.internal.parser.JSONParser;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.omg.CORBA.Object;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
@@ -31,8 +27,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.xml.ws.Response;
 
 
 /** This class is the main controller of my project. Contains all the endpoints.
@@ -190,34 +184,20 @@ public class MainController {
      * @param jsonOrText
      * @return
      */
-    @RequestMapping(value = { "/print/{directory}" }, method = RequestMethod.GET)
-    public ResponseEntity<Object> print(@PathVariable String directory, @RequestParam(value= "json", required = false) Boolean jsonOrText){
+    @RequestMapping(value = { "/print/{directory}" }, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> print(@PathVariable String directory, @RequestParam(value= "json", required = false) Boolean jsonOrText){
 
-        return null;
+        String uri = "http://localhost:9200/{directory}";
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("directory",directory);
+
+        RestTemplate restTemplate = new RestTemplate();
+        String result = restTemplate.getForObject(uri, String.class,params);
+
+        return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
-    /** Prints just the terms of the inverted index of the given collection.
-     *
-     * @param directory
-     * @return
-     */
-    @RequestMapping(value = { "/printTerms/{directory}" }, method = RequestMethod.GET)
-    public ResponseEntity<Object> printTerms(@PathVariable String directory) {
 
-
-        return null;
-    }
-
-    /** Print the files of the given collection.
-     *
-     * @param directory
-     * @return
-     */
-    @RequestMapping(value = { "/files/{directory}" }, method = RequestMethod.GET)
-    public ResponseEntity<Object> printFiles(@PathVariable String directory)  {
-
-        return null;
-    }
 
     /** Create new collection.
      *
@@ -289,7 +269,7 @@ public class MainController {
      * @return
      */
     @RequestMapping(value = { "/search/{directory}" }, method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> search(@PathVariable String directory, @RequestParam("query") String query, @RequestParam(value= "size", required = false) Integer size)  {
+    public ResponseEntity<String> search(@PathVariable String directory, @RequestParam(value = "query", required = false) String query, @RequestParam(value= "size", required = false) Integer size)  {
 
         Map<String, String> params = new HashMap<String, String>();
         params.put("q", query);
@@ -336,10 +316,35 @@ public class MainController {
     @RequestMapping(value = { "/deleteFile/" }, method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteFile(@RequestParam String directory, @RequestParam String file_id) {
 
-        String uri = "http://localhost:9200/"+directory+"/_doc/"+file_id;
+
+        String query = "index:"+file_id;
+        String result = search(directory, query, 1).getBody();
+        String id ="";
+        try{
+            JSONObject response = new JSONObject(result);
+            JSONObject hits = response.getJSONObject("hits");
+            JSONArray hits_array = hits.getJSONArray("hits");
+            for (int i=0; i < hits_array.length(); i++) {
+                JSONObject o = hits_array.getJSONObject(i);
+                id = o.getString("_id");
+            }
+
+        }catch (JSONException err){
+            System.out.println(("Error: "+ err.toString()));
+        }
+        //setting up the request headers
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Object> requestEntity = new HttpEntity<>(requestHeaders);
+
+        if(id.compareTo("")==0){
+            return new ResponseEntity<>("There is no file with this name!" ,HttpStatus.NOT_FOUND);
+        }
+        String uri = "http://localhost:9200/"+directory+"/_doc/"+id;
+
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.delete(uri);
-        return new ResponseEntity<>("File: "+file_id+" from index: "+ directory+" Deleted",HttpStatus.OK);
+        ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.DELETE,requestEntity, String.class);
+        return response;
     }
 
 
