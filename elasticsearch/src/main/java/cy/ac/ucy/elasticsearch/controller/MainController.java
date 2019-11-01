@@ -52,6 +52,12 @@ public class MainController {
         return "index";
     }
 
+    /** Gets the results from the individual evaluation and then calculates the average precision, recall and F1-score.
+     *
+     * @param directory
+     * @param size
+     * @return
+     */
     @RequestMapping(value = { "/general_evaluation/{directory}" }, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<EvaluationMetrics> evaluateIndex(@PathVariable String directory, @RequestParam(value= "size", required = false) Integer size){
 
@@ -60,6 +66,7 @@ public class MainController {
         ArrayList<Query> queries = PrepareTextService.textToJsonQuery(filename);
         ArrayList<QueryResponse> results = new ArrayList<>();
         String result = null;
+        //get all the queries from the file and search throw eleasticsearch
         for (Query q : queries){
             QueryResponse qr = new QueryResponse(q);
             if (size!=null) {
@@ -69,6 +76,7 @@ public class MainController {
                 result = search(directory, q.getQuery(),10).getBody();
             }
             try {
+                //Gets the response documents for each query
                 JSONObject response = new JSONObject(result);
                 JSONObject hits = response.getJSONObject("hits");
                 JSONArray hits_array = hits.getJSONArray("hits");
@@ -84,12 +92,21 @@ public class MainController {
             }
             results.add(qr);
         }
-        ArrayList<EvaluationMetrics> list_metrics = EvaluationService.calculateEvaluationMetrics(results,qevaluation);
-        EvaluationMetrics avgMetrics = EvaluationService.calculateAverageMetrics(list_metrics);
+        ArrayList<EvaluationMetrics> list_metrics = EvaluationService.calculateEvaluationMetrics(results,qevaluation);  //metrics for each query
+        EvaluationMetrics avgMetrics = EvaluationService.calculateAverageMetrics(list_metrics);                         //calculate the average metrics for the whole index
 
         return new ResponseEntity<>(avgMetrics,HttpStatus.OK);
     }
 
+    /**Gets the evaluation query file (cran.qry) which contains some queries and the results query files (cranqrel)
+     * which contains the index of the query, the relevant document and how relevant it is. Then gets each query from
+     * cran.qry file and search it throw the given index and then regarding the results, it produce the metrics of
+     * each query individual.
+     *
+     * @param directory the index name
+     * @param size      the return size of the query
+     * @return
+     */
     @RequestMapping(value = { "/individual_evaluation/{directory}" }, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ArrayList<EvaluationMetrics>> individualEvaluateIndex(@PathVariable String directory, @RequestParam(value= "size", required = false) Integer size){
 
@@ -127,6 +144,12 @@ public class MainController {
         return new ResponseEntity<>(list_metrics,HttpStatus.OK);
     }
 
+    /** Prints each query from the cran.qry file with the result documents return from the elasticsearch
+     *
+     * @param directory the index name
+     * @param size      the return size of the query
+     * @return
+     */
     @RequestMapping(value = { "/evaluation_docs/{directory}" }, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ArrayList<QueryResponse>> evaluation_docs(@PathVariable String directory, @RequestParam(value= "size", required = false) Integer size){
 
@@ -163,7 +186,7 @@ public class MainController {
         return new ResponseEntity<>(results,HttpStatus.OK);
     }
 
-    /** Print the inverted index of a given collection. You have the choice of JSON or string representation.
+    /** Prints all the indices inside ElasticSearch.
      *
      *
      * @return
@@ -177,15 +200,14 @@ public class MainController {
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
-    /** Print the inverted index of a given collection. You have the choice of JSON or string representation.
+    /** Prints information about the given index.
      *
      *
-     * @param directory
-     * @param jsonOrText
+     * @param directory     the index name
      * @return
      */
     @RequestMapping(value = { "/print/{directory}" }, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> print(@PathVariable String directory, @RequestParam(value= "json", required = false) Boolean jsonOrText){
+    public ResponseEntity<String> print(@PathVariable String directory){
 
         String uri = "http://localhost:9200/{directory}";
         Map<String, String> params = new HashMap<String, String>();
@@ -199,9 +221,9 @@ public class MainController {
 
 
 
-    /** Create new collection.
+    /** Creates new collection.
      *
-     * @param directory
+     * @param directory     the name of the index
      * @return
      */
     @RequestMapping(value = { "/{directory}" }, method = RequestMethod.POST)
@@ -217,8 +239,8 @@ public class MainController {
 
     }
 
-    /** Upload a file to a given directory. The files uploaded first to an uploaded folder inside the server and
-     *  then moved to a specific directory (C://Dionysos).
+    /** Uploads the content of the given file to the given index. Note: The structure of the document must be the same
+     *  as the given cran.all.1400.
      *
      * @param directory
      * @param file
@@ -243,7 +265,7 @@ public class MainController {
         return new ResponseEntity<>(data,HttpStatus.OK);
     }
 
-    /** Upload multiple files to a given directory.
+    /** Uploads multiple files to the given index. The structure of the file must be the same as the given cran.all.1400.
      *
      * @param directory
      * @param files
@@ -259,13 +281,14 @@ public class MainController {
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
 
-    /** Search inside a given directory. The user gives a query as a parameter and get the answer as a response.
-     *  Examples:
+    /** Search throw a given index using the query parameter. The syntax of the query parameter is just the same as the
+     *  lucene syntax and supports anything you can imagine. Some of my examples shows how to search inside the index.
+     *  One of them used to search a document inside the index and another one is used to print all the documents inside
+     *  the index.
      *
-     *  NOTE: The operation must be in capital letters.
      *
-     * @param directory
-     * @param query
+     * @param directory     the name of the index
+     * @param query         lucene query syntax
      * @return
      */
     @RequestMapping(value = { "/search/{directory}" }, method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_VALUE)
@@ -294,7 +317,7 @@ public class MainController {
     }
 
 
-    /** Delete a given collection. Everything inside the collection is deleted.
+    /** Delete a given index. Everything inside the index is deleted.
      *
      * @param directory
      * @return
@@ -308,15 +331,16 @@ public class MainController {
         return new ResponseEntity<>("Index "+directory+" Deleted",HttpStatus.OK);
     }
 
-    /** Delete a file inside a collection and update the inverted index of this collection.
+    /** Removes a file from the given index. The file is defined by the index of the file.
      *
-     * @param directory
+     * @param directory      the name of the index
+     * @param file_id        the id of the file you want delete
      * @return
      */
     @RequestMapping(value = { "/deleteFile/" }, method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteFile(@RequestParam String directory, @RequestParam String file_id) {
 
-
+        // Search the file id in order to get the index key id.
         String query = "index:"+file_id;
         String result = search(directory, query, 1).getBody();
         String id ="";

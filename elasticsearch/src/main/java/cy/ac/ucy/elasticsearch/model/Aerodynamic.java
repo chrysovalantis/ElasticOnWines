@@ -1,5 +1,9 @@
 package cy.ac.ucy.elasticsearch.model;
 
+/** This class is used to represent as object the content of the cran.all.1400 file
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 public class Aerodynamic {
 
     private int index;

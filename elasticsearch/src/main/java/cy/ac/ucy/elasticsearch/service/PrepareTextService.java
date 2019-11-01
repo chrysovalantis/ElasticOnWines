@@ -15,12 +15,20 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.TreeMap;
 
-
+/** This class is a service class that contains all the necessary methods to parse the given files.
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 @Service
 public class PrepareTextService {
 
     private static final String upload_dir = "Uploads";
 
+    /** read and parse the cran.all.1400 file
+     *
+     * @param filename
+     * @return
+     */
     public static ArrayList<Aerodynamic> textToJson(String filename){
         String strCurrentLine;
         Path path = Paths.get(upload_dir,filename);
@@ -79,6 +87,11 @@ public class PrepareTextService {
         return dataArray;
     }
 
+    /** Read and parse the cran.qry file
+     *
+     * @param filename
+     * @return
+     */
     public static ArrayList<Query> textToJsonQuery(String filename){
         String strCurrentLine;
 //        Path path = Paths.get(upload_dir,filename);
@@ -114,6 +127,10 @@ public class PrepareTextService {
         return dataArray;
     }
 
+    /** Read and parse the query evaluation file (cranqrel.txt)
+     *
+     * @return
+     */
     public static ArrayList<QueryEvaluation> readQueryEvaluation(){
         String filename = "cranqrel.txt";
         String strCurrentLine;
@@ -147,7 +164,9 @@ public class PrepareTextService {
         return dataArray;
     }
 
-
+    /*
+        Test main
+     */
     public static void main(String[] args){
         String filename = "cranqrel.txt";
         System.out.println(readQueryEvaluation());

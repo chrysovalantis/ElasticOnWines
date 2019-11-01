@@ -7,10 +7,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 
+/** This class is a service class that contains all the necessary methods to evaluate an index.
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 @Service
 public class EvaluationService {
 
-
+    /** Calculates the precision, recall and f1score for each query
+     *
+     * @param results
+     * @param evaluations
+     * @return
+     */
     public static ArrayList<EvaluationMetrics> calculateEvaluationMetrics(ArrayList<QueryResponse> results, ArrayList<QueryEvaluation> evaluations){
 
         ArrayList<EvaluationMetrics> metricsList = new ArrayList<>();
@@ -49,6 +58,11 @@ public class EvaluationService {
         return metricsList;
     }
 
+    /** Takes the individual metrics and calculates the average score
+     *
+     * @param metrics
+     * @return
+     */
     public static EvaluationMetrics calculateAverageMetrics(ArrayList<EvaluationMetrics> metrics){
 
         EvaluationMetrics averageMetrics = new EvaluationMetrics();

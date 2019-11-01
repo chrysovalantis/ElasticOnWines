@@ -1,11 +1,14 @@
 package cy.ac.ucy.elasticsearch.form;
 
-import java.util.HashSet;
 import java.util.TreeMap;
 
+/** This class is used to represent as object the cranqrel document content
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 public class QueryEvaluation {
-    private int index;
-    private TreeMap<Integer, Integer> related_docs;
+    private int index;                                      //query id
+    private TreeMap<Integer, Integer> related_docs;         //key: doc id, value: relative value (-1,4)
 
     public QueryEvaluation(int index) {
         this.index = index;

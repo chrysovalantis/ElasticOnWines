@@ -1,12 +1,16 @@
 package cy.ac.ucy.elasticsearch.model;
 
-import java.util.Arrays;
 import java.util.HashSet;
 
+
+/** This class is used to represent a query and the relative documents that elastic search returns
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 public class QueryResponse {
 
-    private Query q;
-    private HashSet<Integer> docIDs;
+    private Query q;                            //the query we sent to elasticsearch
+    private HashSet<Integer> docIDs;            //the relative document from elasticsearch response
 
     public QueryResponse(Query q) {
         this.q = q;

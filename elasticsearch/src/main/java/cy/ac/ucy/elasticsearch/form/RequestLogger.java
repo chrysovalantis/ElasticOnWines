@@ -1,5 +1,4 @@
 package cy.ac.ucy.elasticsearch.form;
-import org.omg.PortableInterceptor.ClientRequestInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpRequest;
@@ -10,6 +9,10 @@ import org.springframework.util.StreamUtils;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+/** This class is used for debugging the http requests
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 public class RequestLogger implements ClientHttpRequestInterceptor {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 

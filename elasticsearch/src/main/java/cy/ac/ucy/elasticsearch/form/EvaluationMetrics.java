@@ -1,5 +1,10 @@
 package cy.ac.ucy.elasticsearch.form;
 
+
+/** This class is used to represent as object the evaluation metrics
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 public class EvaluationMetrics {
     private double precision;
     private double recall;

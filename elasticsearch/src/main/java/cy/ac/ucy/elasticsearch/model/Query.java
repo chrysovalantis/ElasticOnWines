@@ -1,9 +1,13 @@
 package cy.ac.ucy.elasticsearch.model;
 
+/** This class is used to represent as object a query.
+ *
+ * @author Chrysovalantis Christodoulous
+ */
 public class Query {
 
-    private int index;
-    private String query;
+    private int index;                  //query id
+    private String query;               //lucene syntax query
 
     public Query(int index, String query) {
         this.index = index;
@@ -33,4 +37,5 @@ public class Query {
                 ", query='" + query + '\'' +
                 '}';
     }
+
 }
